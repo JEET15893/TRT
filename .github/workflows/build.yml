@@ -13,14 +13,31 @@ jobs:
 
       - name: Extract TRT project
         run: |
+          rm -rf extracted
+          mkdir extracted
           unzip -q TRT_Native_Widget_v2.zip -d extracted
-          echo "Contents:"
-          find extracted -maxdepth 3 -type f | head -100
+
+          echo "Extracted files:"
+          find extracted -maxdepth 4 -type f | head -100
 
       - name: Find Android project
         run: |
-          PROJECT_DIR=$(find extracted -name "settings.gradle" -o -name "settings.gradle.kts" | head -1 | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          GRADLEW=$(find extracted -type f -name "gradlew" | head -1)
+
+          if [ -z "$GRADLEW" ]; then
+            echo "ERROR: gradlew was not found in the extracted project."
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$GRADLEW")
+
+          echo "Found Gradle wrapper:"
+          echo "$GRADLEW"
+
+          echo "Android project directory:"
+          echo "$PROJECT_DIR"
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -35,9 +52,14 @@ jobs:
         working-directory: ${{ env.PROJECT_DIR }}
         run: ./gradlew assembleDebug
 
+      - name: Find APK
+        run: |
+          echo "APK files found:"
+          find "$PROJECT_DIR" -type f -name "*.apk"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: TRT-native-widget-apk
           path: |
-            ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
+            ${{ env.PROJECT_DIR }}/**/build/outputs/apk/debug/*.apk
