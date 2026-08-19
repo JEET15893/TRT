@@ -17,49 +17,23 @@ jobs:
           mkdir extracted
           unzip -q TRT_Native_Widget_v2.zip -d extracted
 
-          echo "Extracted files:"
-          find extracted -maxdepth 4 -type f | head -100
-
-      - name: Find Android project
-        run: |
-          GRADLEW=$(find extracted -type f -name "gradlew" | head -1)
-
-          if [ -z "$GRADLEW" ]; then
-            echo "ERROR: gradlew was not found in the extracted project."
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$GRADLEW")
-
-          echo "Found Gradle wrapper:"
-          echo "$GRADLEW"
-
-          echo "Android project directory:"
-          echo "$PROJECT_DIR"
-
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Make Gradle executable
-        run: chmod +x "$PROJECT_DIR/gradlew"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
       - name: Build APK
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: ./gradlew assembleDebug
-
-      - name: Find APK
-        run: |
-          echo "APK files found:"
-          find "$PROJECT_DIR" -type f -name "*.apk"
+        working-directory: extracted
+        run: gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: TRT-native-widget-apk
-          path: |
-            ${{ env.PROJECT_DIR }}/**/build/outputs/apk/debug/*.apk
+          path: extracted/app/build/outputs/apk/debug/app-debug.apk
