@@ -15,7 +15,7 @@ jobs:
         run: |
           rm -rf extracted
           mkdir extracted
-          unzip -q TRT_Native_Widget_v6_night_countdown.zip -d extracted
+          unzip -q TRT_Native_Widget_v10_green_window_countdown.zip -d extracted
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
